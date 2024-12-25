@@ -1,5 +1,5 @@
 # mes-candidatures
-# 📋 Gestion des Candidatures PFE
+## 📋 Gestion des Candidatures PFE
 
 Cette application est conçue pour faciliter la gestion des candidatures pour des stages de fin d'études (PFE) grâce à **Laravel** et **Livewire**. Elle offre des fonctionnalités complètes pour ajouter, modifier, supprimer et rechercher des candidatures.
 
@@ -92,16 +92,6 @@ La vue contient :
    ```
 
 7. **Accédez à l'application** : Ouvrez [http://localhost:8000](http://localhost:8000) dans votre navigateur.
-
----
-
-## 🖼️ Aperçu de l'Application
-
-### 📜 Liste des Candidatures
-![Liste des candidatures](https://via.placeholder.com/800x400?text=Liste+des+Candidatures)
-
-### 🖊️ Formulaire d'Ajout
-![Formulaire d'ajout](https://via.placeholder.com/800x400?text=Formulaire+d%27Ajout)
 
 ---
 
