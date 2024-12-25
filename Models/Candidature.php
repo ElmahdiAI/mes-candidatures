@@ -16,9 +16,10 @@ class Candidature extends Model
         'poste',
         'technologies',
         'remuneration',
+        'préembauche', // Nouvelle colonne
+        'modalite_travail',
         'contact',
         'date_debut',
-        'modalite_travail',
         'reference',
         'statut_candidature',
     ];

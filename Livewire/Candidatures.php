@@ -7,59 +7,48 @@ use Livewire\Component;
 
 class Candidatures extends Component
 {
-
+    // Déclaration des propriétés publiques
     public $entreprise, $ville, $poste, $technologies, $remuneration;
     public $contact, $date_debut, $modalite_travail, $reference, $statut_candidature;
-    public $candidatures;
-    public $editingCandidature = false;
-    public $confirmingDeletion = false;
+    public $candidatures, $editingCandidature = false, $confirmingDeletion = false, $préembauche = false;
+    public $search = '', $sortField = 'entreprise', $sortDirection = 'asc';
 
-
-    public $search = ''; // Ajout du champ de recherche
-
-    public $sortField = 'entreprise';
-    public $sortDirection = 'asc';
-
-
+    /**
+     * Initialisation du composant.
+     */
     public function mount()
-    {
-       $this->loadCandidatures();
-    }
-
-    public function store()
-{
-    $validatedData = $this->validate([
-        'entreprise' => 'required|string',
-        'ville' => 'required|string',
-        'poste' => 'required|string',
-        'technologies' => 'nullable|string',
-        'remuneration' => 'required|string',
-        'contact' => 'nullable|string',
-        'date_debut' => 'nullable|date',
-        'modalite_travail' => 'required|string',
-        'reference' => 'nullable|string',
-        'statut_candidature' => 'required|string',
-    ]);
-
-    Candidature::create($validatedData);
-
-    $this->resetInputFields();
-    $this->loadCandidatures();
-    session()->flash('success', 'Candidature ajoutée avec succès.');
-}
-
-
-    public function updatedSearch()
     {
         $this->loadCandidatures();
     }
-    
 
-private function loadCandidatures()
+    /**
+     * Validation des données.
+     */
+    private function validateCandidature()
+    {
+        return $this->validate([
+            'entreprise' => 'required|string',
+            'ville' => 'required|string',
+            'poste' => 'required|string',
+            'technologies' => 'nullable|string',
+            'remuneration' => 'required|string',
+            'préembauche' => 'required|boolean',
+            'contact' => 'nullable|string',
+            'date_debut' => 'nullable|date',
+            'modalite_travail' => 'required|string',
+            'reference' => 'nullable|string',
+            'statut_candidature' => 'required|string',
+        ]);
+    }
+
+    /**
+     * Charger les candidatures avec tri et recherche.
+     */
+    private function loadCandidatures()
     {
         $this->candidatures = Candidature::query()
-        ->when($this->search, function ($query) {
-            $query->where('entreprise', 'like', '%' . $this->search . '%')
+            ->when($this->search, function ($query) {
+                $query->where('entreprise', 'like', '%' . $this->search . '%')
                     ->orWhere('ville', 'like', '%' . $this->search . '%')
                     ->orWhere('poste', 'like', '%' . $this->search . '%')
                     ->orWhere('technologies', 'like', '%' . $this->search . '%');
@@ -67,88 +56,76 @@ private function loadCandidatures()
             ->orderBy($this->sortField, $this->sortDirection)
             ->get();
     }
-    // Sorting
+
+    /**
+     * Ajouter une nouvelle candidature.
+     */
+    public function store()
+    {
+        Candidature::create($this->validateCandidature());
+        $this->resetInputFields();
+        $this->loadCandidatures();
+        session()->flash('success', 'Candidature ajoutée avec succès.');
+    }
+
+    /**
+     * Mettre à jour la liste des candidatures lors de la recherche.
+     */
+    public function updatedSearch()
+    {
+        $this->loadCandidatures();
+    }
+
+    /**
+     * Gestion du tri par colonne.
+     */
     public function sortBy($field)
     {
-      if ($this->sortField === $field) {
-        $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-      } else {
-        $this->sortDirection = 'asc';
-      }
-      $this->sortField = $field;
-      $this->loadCandidatures();
+        $this->sortDirection = $this->sortField === $field && $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        $this->sortField = $field;
+        $this->loadCandidatures();
     }
 
-
-
+    /**
+     * Préparer la modification d'une candidature.
+     */
     public function edit($id)
-{
-    try {
+    {
         $candidature = Candidature::findOrFail($id);
         $this->editingCandidature = $candidature;
-        
-        // Pré-remplir les champs avec les données existantes
-        $this->entreprise = $candidature->entreprise;
-        $this->ville = $candidature->ville;
-        $this->poste = $candidature->poste;
-        $this->technologies = $candidature->technologies;
-        $this->remuneration = $candidature->remuneration;
-        $this->contact = $candidature->contact;
-        $this->date_debut = $candidature->date_debut;
-        $this->modalite_travail = $candidature->modalite_travail;
-        $this->reference = $candidature->reference;
-        $this->statut_candidature = $candidature->statut_candidature;
-        
-    } catch (\Exception $e) {
-        session()->flash('error', 'Candidature non trouvée.');
+        $this->fill($candidature->toArray());
     }
-}
 
-public function updateCandidature()
-{
-    try {
+    /**
+     * Mettre à jour une candidature.
+     */
+    public function updateCandidature()
+    {
         if ($this->editingCandidature) {
-            $validatedData = $this->validate([
-                'entreprise' => 'required|string',
-                'ville' => 'required|string',
-                'poste' => 'required|string',
-                'technologies' => 'nullable|string',
-                'remuneration' => 'required|string',
-                'contact' => 'nullable|string',
-                'date_debut' => 'nullable|date',
-                'modalite_travail' => 'required|string',
-                'reference' => 'nullable|string',
-                'statut_candidature' => 'required|string',
-            ]);
-
-            // Mettre à jour les données
-            $this->editingCandidature->update($validatedData);
-            $this->candidatures = Candidature::all();
-            $this->resetInputFields();
-            $this->editingCandidature = false;
+            $this->editingCandidature->update($this->validateCandidature());
+            $this->resetEditing();
             session()->flash('success', 'Candidature mise à jour avec succès.');
+            $this->loadCandidatures();
         }
-    } catch (\Exception $e) {
-        session()->flash('error', 'Une erreur est survenue lors de la mise à jour de la candidature.');
     }
-}
-    
-    
-public function cancelEdit()
-{
-    $this->editingCandidature = false;
-    $this->resetInputFields();
-    $this->resetErrorBag();
-    $this->resetValidation();
-}
 
+    /**
+     * Réinitialiser le formulaire d'édition.
+     */
+    public function resetEditing()
+    {
+        $this->resetInputFields();
+        $this->editingCandidature = false;
+    }
+
+    /**
+     * Supprimer une candidature.
+     */
     public function delete($id)
     {
-        $candidature = Candidature::find($id);
-
-        if ($candidature) {
+        if ($candidature = Candidature::find($id)) {
             $candidature->delete();
-            $this->candidatures = Candidature::all();
+            $this->loadCandidatures();
             session()->flash('success', 'Candidature supprimée avec succès.');
         } else {
             session()->flash('error', 'Candidature non trouvée.');
@@ -156,22 +133,34 @@ public function cancelEdit()
         $this->confirmingDeletion = false;
     }
 
+    /**
+     * Confirmer ou annuler la suppression.
+     */
     public function confirmDelete($id)
     {
         $this->confirmingDeletion = $id;
     }
+
     public function cancelDelete()
     {
         $this->confirmingDeletion = false;
     }
 
+    /**
+     * Réinitialiser les champs du formulaire.
+     */
     private function resetInputFields()
     {
-        $this->entreprise = $this->ville = $this->poste = $this->technologies = null;
-        $this->remuneration = $this->contact = $this->date_debut = null;
-        $this->modalite_travail = $this->reference = $this->statut_candidature = null;
+        $this->reset([
+            'entreprise', 'ville', 'poste', 'technologies',
+            'remuneration', 'contact', 'date_debut', 'préembauche',
+            'modalite_travail', 'reference', 'statut_candidature'
+        ]);
     }
 
+    /**
+     * Afficher la vue.
+     */
     public function render()
     {
         return view('livewire.candidatures');
