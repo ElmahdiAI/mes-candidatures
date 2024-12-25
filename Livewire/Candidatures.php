@@ -20,7 +20,23 @@ class Candidatures extends Component
     {
         $this->loadCandidatures();
     }
-
+    
+    /**
+     * Charger les candidatures avec tri et recherche.
+     */
+    private function loadCandidatures()
+    {
+        $this->candidatures = Candidature::query()
+            ->when($this->search, function ($query) {
+                $query->where('entreprise', 'like', '%' . $this->search . '%')
+                    ->orWhere('ville', 'like', '%' . $this->search . '%')
+                    ->orWhere('poste', 'like', '%' . $this->search . '%')
+                    ->orWhere('technologies', 'like', '%' . $this->search . '%');
+            })
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->get();
+    }
+    
     /**
      * Validation des données.
      */
@@ -41,21 +57,6 @@ class Candidatures extends Component
         ]);
     }
 
-    /**
-     * Charger les candidatures avec tri et recherche.
-     */
-    private function loadCandidatures()
-    {
-        $this->candidatures = Candidature::query()
-            ->when($this->search, function ($query) {
-                $query->where('entreprise', 'like', '%' . $this->search . '%')
-                    ->orWhere('ville', 'like', '%' . $this->search . '%')
-                    ->orWhere('poste', 'like', '%' . $this->search . '%')
-                    ->orWhere('technologies', 'like', '%' . $this->search . '%');
-            })
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->get();
-    }
 
     /**
      * Ajouter une nouvelle candidature.
